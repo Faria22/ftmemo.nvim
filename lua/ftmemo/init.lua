@@ -182,8 +182,8 @@ end
 
 -- Clear saved filetype for a file
 function M.clear_filetype(filepath)
+  local bufnr = vim.api.nvim_get_current_buf()
   if not filepath then
-    local bufnr = vim.api.nvim_get_current_buf()
     filepath = get_file_path(bufnr)
   end
   
@@ -196,6 +196,10 @@ function M.clear_filetype(filepath)
   else
     vim.notify('[ftmemo] No saved filetype found for current file')
   end
+  
+  -- Clear the current buffer's filetype as requested in the issue
+  vim.api.nvim_buf_set_option(bufnr, 'filetype', '')
+  log('Cleared current buffer filetype')
 end
 
 -- Show saved filetypes
