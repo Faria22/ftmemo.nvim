@@ -274,7 +274,7 @@ end
 -- Commands
 vim.api.nvim_create_user_command('FtMemoClear', function()
   M.clear_filetype()
-end, { desc = 'Clear saved filetype for current file' })
+end, { desc = 'Clear saved filetype for current file and clear buffer filetype' })
 
 vim.api.nvim_create_user_command('FtMemoShow', function()
   M.show_mappings()
