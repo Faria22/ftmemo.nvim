@@ -70,7 +70,7 @@ require('ftmemo').setup({
 ## Commands
 
 - `:FtMemoShow` - Display all saved filetype mappings
-- `:FtMemoClear` - Clear the saved filetype for the current file
+- `:FtMemoClear` - Clear the saved filetype for the current file and clear the current buffer's filetype
 - `:FtMemoCleanup` - Clean up saved mappings for files that no longer exist
 
 ## How it Works
