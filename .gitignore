@@ -39,3 +39,11 @@ luac.out
 *.x86_64
 *.hex
 
+# Plugin data files (for testing)
+ftmemo.json
+ftmemo.json.backup
+
+# Test files
+test_*
+*_test.lua
+

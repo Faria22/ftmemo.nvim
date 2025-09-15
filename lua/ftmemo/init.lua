@@ -37,6 +37,14 @@ local function load_mappings()
       log('Loaded ' .. vim.tbl_count(filetype_map) .. ' filetype mappings')
     else
       log('Failed to parse storage file, starting fresh')
+      -- Backup the corrupted file
+      local backup_file = config.storage_file .. '.backup'
+      local backup = io.open(backup_file, 'w')
+      if backup then
+        backup:write(content)
+        backup:close()
+        log('Backed up corrupted storage file to: ' .. backup_file)
+      end
     end
   end
 end
@@ -68,8 +76,32 @@ local function get_file_path(bufnr)
     return nil
   end
   
-  -- Convert to absolute path
-  return vim.fn.resolve(vim.fn.expand(path))
+  -- Convert to absolute path and normalize
+  local abs_path = vim.fn.resolve(vim.fn.expand(path))
+  
+  -- Ensure the path exists (for cleaning up old mappings)
+  if vim.fn.filereadable(abs_path) == 0 and vim.fn.isdirectory(abs_path) == 0 then
+    return nil
+  end
+  
+  return abs_path
+end
+
+-- Clean up mappings for files that no longer exist
+local function cleanup_mappings()
+  local cleaned = false
+  for filepath, _ in pairs(filetype_map) do
+    if vim.fn.filereadable(filepath) == 0 and vim.fn.isdirectory(filepath) == 0 then
+      filetype_map[filepath] = nil
+      last_manual_filetype[filepath] = nil
+      cleaned = true
+      log('Cleaned up mapping for non-existent file: ' .. filepath)
+    end
+  end
+  
+  if cleaned then
+    save_mappings()
+  end
 end
 
 -- Check if filetype was set manually by comparing with automatic detection
@@ -90,8 +122,11 @@ local function was_filetype_set_manually(bufnr)
   
   -- If filetype changed from what we remembered, it was likely manual
   if last_manual_filetype[filepath] ~= current_ft then
-    log('Manual filetype change detected: ' .. filepath .. ' -> ' .. current_ft)
-    return true
+    -- Additional check: make sure we're not in the middle of restoration
+    if not is_loading then
+      log('Manual filetype change detected: ' .. filepath .. ' -> ' .. current_ft)
+      return true
+    end
   end
   
   return false
@@ -187,8 +222,17 @@ function M.setup(opts)
     return
   end
   
+  -- Create the data directory if it doesn't exist
+  local data_dir = vim.fn.fnamemodify(config.storage_file, ':h')
+  if vim.fn.isdirectory(data_dir) == 0 then
+    vim.fn.mkdir(data_dir, 'p')
+  end
+  
   -- Load existing mappings
   load_mappings()
+  
+  -- Clean up old mappings on startup
+  cleanup_mappings()
   
   -- Create autocommands
   local group = vim.api.nvim_create_augroup('FtMemo', { clear = true })
@@ -231,5 +275,10 @@ end, { desc = 'Clear saved filetype for current file' })
 vim.api.nvim_create_user_command('FtMemoShow', function()
   M.show_mappings()
 end, { desc = 'Show all saved filetype mappings' })
+
+vim.api.nvim_create_user_command('FtMemoCleanup', function()
+  cleanup_mappings()
+  vim.notify('[ftmemo] Cleaned up mappings for non-existent files')
+end, { desc = 'Clean up saved mappings for files that no longer exist' })
 
 return M

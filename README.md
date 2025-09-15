@@ -71,6 +71,7 @@ require('ftmemo').setup({
 
 - `:FtMemoShow` - Display all saved filetype mappings
 - `:FtMemoClear` - Clear the saved filetype for the current file
+- `:FtMemoCleanup` - Clean up saved mappings for files that no longer exist
 
 ## How it Works
 
@@ -78,6 +79,7 @@ require('ftmemo').setup({
 2. **Storage**: When a manual filetype change is detected, it's saved to a JSON file in your Neovim data directory
 3. **Restoration**: When opening a file, the plugin checks if there's a saved filetype and applies it
 4. **Persistence**: All mappings are stored persistently and survive Neovim restarts
+5. **Cleanup**: Invalid mappings for non-existent files are automatically cleaned up on startup
 
 ## Examples
 
