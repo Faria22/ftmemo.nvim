@@ -64,8 +64,12 @@ require('ftmemo').setup({
   enabled = true,                                    -- Enable/disable the plugin
   storage_file = vim.fn.stdpath('data') .. '/ftmemo.json', -- Where to store filetype mappings
   debug = false,                                     -- Enable debug logging
+  ignore_filetypes = {},                             -- Filetypes to never save or restore
 })
 ```
+
+`ftmemo.nvim` ignores non-file buffers automatically. `ignore_filetypes` is useful for
+plugin-managed filetypes that may still be file-backed but should never be persisted.
 
 ## Commands
 

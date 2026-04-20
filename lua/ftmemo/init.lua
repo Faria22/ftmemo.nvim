@@ -5,6 +5,7 @@ local config = {
   enabled = true,
   storage_file = vim.fn.stdpath('data') .. '/ftmemo.json',
   debug = false,
+  ignore_filetypes = {},
 }
 
 -- Internal state
@@ -71,13 +72,35 @@ end
 -- Get the absolute path of a file
 local function get_file_path(bufnr)
   bufnr = bufnr or 0
+
+  local buftype = vim.api.nvim_get_option_value('buftype', { buf = bufnr })
+  if buftype ~= '' then
+    return nil
+  end
+
+  local filetype = vim.api.nvim_get_option_value('filetype', { buf = bufnr })
+  if vim.tbl_contains(config.ignore_filetypes, filetype) then
+    return nil
+  end
+
   local path = vim.api.nvim_buf_get_name(bufnr)
   if path == '' then
     return nil
   end
   
-  -- Convert to absolute path and normalize
-  local abs_path = vim.fn.resolve(vim.fn.expand(path))
+  -- Special buffers can expose names like "[dap-repl]"; avoid path expansion on
+  -- non-file names and normalize file-backed buffers only.
+  local abs_path = vim.fn.fnamemodify(path, ':p')
+  if abs_path == '' or abs_path:sub(1, 1) ~= '/' then
+    return nil
+  end
+
+  local real_path = vim.loop.fs_realpath(abs_path)
+  if real_path then
+    abs_path = real_path
+  else
+    abs_path = vim.fn.resolve(abs_path)
+  end
   
   -- Ensure the path exists (for cleaning up old mappings)
   if vim.fn.filereadable(abs_path) == 0 and vim.fn.isdirectory(abs_path) == 0 then
